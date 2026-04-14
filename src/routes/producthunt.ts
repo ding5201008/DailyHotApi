@@ -1,5 +1,7 @@
 import type { ListItem, RouterData } from "../types.js";
 import { get } from "../utils/getData.js";
+import { getTime } from "../utils/getTime.js";
+import { parseRSS } from "../utils/parseRSS.js";
 import { load } from "cheerio";
 
 export const handleRoute = async (_: undefined, noCache: boolean) => {
@@ -18,36 +20,39 @@ export const handleRoute = async (_: undefined, noCache: boolean) => {
 
 const getList = async (noCache: boolean) => {
   const baseUrl = "https://www.producthunt.com";
+  const feedUrl = `${baseUrl}/feed`;
   const result = await get<string>({
-    url: baseUrl,
+    url: feedUrl,
     noCache,
-    headers: {
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+    responseType: "text",
   });
 
   try {
-    const $ = load(result.data);
-    const stories: ListItem[] = [];
+    const items = await parseRSS(result.data);
+    const stories: ListItem[] = items
+      .map((item, index): ListItem | undefined => {
+        const content = item.content || item.contentSnippet || "";
+        const $ = load(content);
+        const desc = $("p").first().text().trim() || undefined;
+        const link = item.link || "";
+        const id = item.guid?.split("/").pop() || link || index;
 
-    $("[data-test=homepage-section-0] [data-test^=post-item]").each((_, el) => {
-      const a = $(el).find("a").first();
-      const path = a.attr("href");
-      const title = $(el).find("a[data-test^=post-name]").text().trim();
-      const id = $(el).attr("data-test")?.replace("post-item-", "");
-      const vote = $(el).find("[data-test=vote-button]").text().trim();
+        if (!item.title || !link) {
+          return undefined;
+        }
 
-      if (path && id && title) {
-        stories.push({
+        return {
           id,
-          title,
-          hot: parseInt(vote) || undefined,
-          timestamp: undefined,
-          url: `${baseUrl}${path}`,
-          mobileUrl: `${baseUrl}${path}`,
-        });
-      }
-    });
+          title: item.title,
+          desc,
+          author: item.author,
+          hot: undefined,
+          timestamp: item.pubDate ? getTime(item.pubDate) : undefined,
+          url: link,
+          mobileUrl: link,
+        };
+      })
+      .filter((item): item is ListItem => Boolean(item));
 
     return {
       ...result,

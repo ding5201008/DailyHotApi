@@ -25,38 +25,43 @@ export const handleRoute = async (_: undefined, noCache: boolean) => {
   return routeData;
 };
 
-interface EarthquakeItem {
-  NEW_DID: string;
-  LOCATION_C: string;
-  M: string;
-  O_TIME: string;
-  [key: string]: string;
+interface WolfxEarthquakeItem {
+  EventID: string;
+  time: string;
+  ReportTime: string;
+  location: string;
+  magnitude: string;
+  depth: string;
+  latitude: string;
+  longitude: string;
 }
 
 const getList = async (noCache: boolean) => {
-  const url = `https://news.ceic.ac.cn/speedsearch.html`;
-  const result = await get<string>({ url, noCache });
-  const regex = /const newdata = (\[.*?\]);/s;
-  const match = result.data.match(regex);
-  const list: EarthquakeItem[] = match && match[1] ? JSON.parse(match[1]) : [];
+  const url = "https://api.wolfx.jp/cenc_eqlist.json";
+  const result = await get<Record<string, WolfxEarthquakeItem | string>>({ url, noCache });
+  const list = Object.values(result.data).filter(
+    (item): item is WolfxEarthquakeItem => typeof item === "object" && Boolean(item.EventID),
+  );
   return {
     ...result,
     data: list.map((v) => {
-      const contentBuilder: string[] = [];
-      const { NEW_DID, LOCATION_C, M } = v;
-      for (const mappingsKey in mappings) {
-        contentBuilder.push(
-          `${mappings[mappingsKey]}：${v[mappingsKey]}`,
-        );
-      }
+      const contentBuilder = [
+        `${mappings.O_TIME}：${v.time}`,
+        `${mappings.LOCATION_C}：${v.location}`,
+        `${mappings.M}：${v.magnitude}`,
+        `${mappings.EPI_LAT}：${v.latitude}`,
+        `${mappings.EPI_LON}：${v.longitude}`,
+        `${mappings.EPI_DEPTH}：${v.depth}`,
+        `${mappings.SAVE_TIME}：${v.ReportTime}`,
+      ];
       return {
-        id: NEW_DID,
-        title: `${LOCATION_C}发生${M}级地震`,
+        id: v.EventID,
+        title: `${v.location}发生${v.magnitude}级地震`,
         desc: contentBuilder.join("\n"),
-        timestamp: getTime(v["O_TIME"]),
+        timestamp: getTime(v.time),
         hot: undefined,
-        url: `https://news.ceic.ac.cn/${NEW_DID}.html`,
-        mobileUrl: `https://news.ceic.ac.cn/${NEW_DID}.html`,
+        url: "https://news.ceic.ac.cn/",
+        mobileUrl: "https://news.ceic.ac.cn/",
       };
     }),
   };

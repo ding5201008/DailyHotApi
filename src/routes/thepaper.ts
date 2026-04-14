@@ -30,8 +30,16 @@ interface ThepaperResponse {
 }
 
 const getList = async (noCache: boolean) => {
-  const url = `https://cache.thepaper.cn/contentapi/wwwIndex/rightSidebar`;
-  const result = await get<ThepaperResponse>({ url, noCache });
+  const url = "https://www.thepaper.cn/contentapi/wwwIndex/rightSidebar";
+  const result = await get<ThepaperResponse>({
+    url,
+    noCache,
+    timeout: 15000,
+    headers: {
+      Referer: "https://www.thepaper.cn/",
+      "User-Agent": "Mozilla/5.0",
+    },
+  });
   const list = result.data.data.hotNews;
   return {
     ...result,

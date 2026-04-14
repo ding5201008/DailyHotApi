@@ -1,5 +1,6 @@
 import type { RouterData, ListContext, Options } from "../types.js";
 import { getTime, getCurrentDateTime } from "../utils/getTime.js";
+import { parseChineseNumber } from "../utils/getNum.js";
 import { get } from "../utils/getData.js";
 
 // 榜单类别
@@ -120,8 +121,53 @@ interface SinaNewsItem {
   url: string;
 }
 
+interface SinaHotItem {
+  base: {
+    base: {
+      uniqueId: string;
+      url: string;
+    };
+  };
+  info: {
+    hotValue: string;
+    title: string;
+  };
+}
+
+interface SinaHotResponse {
+  data: {
+    hotList: SinaHotItem[];
+  };
+}
+
+const getHotList = async (noCache: boolean) => {
+  const url = "https://newsapp.sina.cn/api/hotlist?newsId=HB-1-snhs%2Ftop_news_list-all";
+  const result = await get<SinaHotResponse>({ url, noCache });
+  const list = result.data.data.hotList;
+  return {
+    ...result,
+    data: list.map((v) => {
+      const base = v.base.base;
+      const info = v.info;
+      return {
+        id: base.uniqueId,
+        title: info.title,
+        author: undefined,
+        hot: parseChineseNumber(info.hotValue),
+        timestamp: undefined,
+        url: base.url,
+        mobileUrl: base.url,
+      };
+    }),
+  };
+};
+
 const getList = async (options: Options, noCache: boolean) => {
   const { type } = options;
+  if (type === "1") {
+    return getHotList(noCache);
+  }
+
   // 必要数据
   const { params, www } = listType[type as keyof typeof listType];
   const { year, month, day } = getCurrentDateTime(true);
