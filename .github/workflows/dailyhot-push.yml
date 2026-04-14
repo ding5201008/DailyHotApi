@@ -19,6 +19,7 @@ jobs:
       NODE_ENV: production
       PORT: 6688
       USE_LOG_FILE: false
+      REDIS_ENABLED: false
       REDIS_HOST: ""
       REDIS_PASSWORD: ""
       PUSH_ENABLED: true

@@ -16,6 +16,7 @@ export type Config = {
   REDIS_PORT: number;
   REDIS_PASSWORD: string;
   REDIS_DB: number;
+  REDIS_ENABLED: boolean;
   ZHIHU_COOKIE: string;
   FILTER_WEIBO_ADVERTISEMENT: boolean;
   PUSH_ENABLED: boolean;
@@ -67,7 +68,8 @@ export const config: Config = {
   REDIS_HOST: getEnvVariable("REDIS_HOST") || "127.0.0.1",
   REDIS_PORT: getNumericEnvVariable("REDIS_PORT", 6379),
   REDIS_PASSWORD: getEnvVariable("REDIS_PASSWORD") || "",
-  REDIS_DB:  getNumericEnvVariable("REDIS_DB", 0),
+  REDIS_DB: getNumericEnvVariable("REDIS_DB", 0),
+  REDIS_ENABLED: getBooleanEnvVariable("REDIS_ENABLED", true),
   ZHIHU_COOKIE: getEnvVariable("ZHIHU_COOKIE") || "",
   FILTER_WEIBO_ADVERTISEMENT: getBooleanEnvVariable("FILTER_WEIBO_ADVERTISEMENT", false),
   PUSH_ENABLED: getBooleanEnvVariable("PUSH_ENABLED", true),

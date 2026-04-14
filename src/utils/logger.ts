@@ -66,7 +66,7 @@ const logger = createLogger({
 });
 
 // 控制台输出
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" || process.env.GITHUB_ACTIONS === "true" || !config.USE_LOG_FILE) {
   try {
     logger.add(
       new transports.Console({

@@ -11,6 +11,7 @@ services:
       - "./logs:/app/logs"
     environment:
       - PORT=6688
+      - REDIS_ENABLED=${REDIS_ENABLED:-true}
       - PUSH_ENABLED=${PUSH_ENABLED:-true}
       - PUSH_TIMEZONE=${PUSH_TIMEZONE:-Asia/Shanghai}
       - PUSH_SCHEDULE_TIMES=${PUSH_SCHEDULE_TIMES:-09:00,23:00}

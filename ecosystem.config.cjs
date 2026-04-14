@@ -10,6 +10,7 @@ module.exports = {
     env: {
       NODE_ENV: 'development',
       PORT: 6688,
+      REDIS_ENABLED: process.env.REDIS_ENABLED || 'true',
       PUSH_ENABLED: process.env.PUSH_ENABLED || 'true',
       PUSH_TIMEZONE: process.env.PUSH_TIMEZONE || 'Asia/Shanghai',
       PUSH_SCHEDULE_TIMES: process.env.PUSH_SCHEDULE_TIMES || '09:00,23:00',

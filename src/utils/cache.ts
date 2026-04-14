@@ -22,17 +22,19 @@ const cache = new NodeCache({
 });
 
 // init Redis client
-const redis = new Redis({
-  host: config.REDIS_HOST,
-  port: config.REDIS_PORT,
-  password: config.REDIS_PASSWORD,
-  db: config.REDIS_DB,
-  maxRetriesPerRequest: 5,
-  // 重试策略：最小延迟 50ms，最大延迟 2s
-  retryStrategy: (times) => Math.min(times * 50, 2000),
-  // 仅在第一次建立连接
-  lazyConnect: true,
-});
+const redis = config.REDIS_ENABLED
+  ? new Redis({
+      host: config.REDIS_HOST,
+      port: config.REDIS_PORT,
+      password: config.REDIS_PASSWORD,
+      db: config.REDIS_DB,
+      maxRetriesPerRequest: 5,
+      // 重试策略：最小延迟 50ms，最大延迟 2s
+      retryStrategy: (times) => Math.min(times * 50, 2000),
+      // 仅在第一次建立连接
+      lazyConnect: true,
+    })
+  : undefined;
 
 // Redis 是否可用
 let isRedisAvailable: boolean = false;
@@ -40,6 +42,7 @@ let isRedisTried: boolean = false;
 
 // Redis 连接状态
 const ensureRedisConnection = async () => {
+  if (!redis) return;
   if (isRedisTried) return;
   try {
     if (redis.status !== "ready" && redis.status !== "connecting") await redis.connect();
@@ -56,7 +59,7 @@ const ensureRedisConnection = async () => {
 };
 
 // Redis 事件监听
-redis.on("error", (err) => {
+redis?.on("error", (err) => {
   if (!isRedisTried) {
     isRedisAvailable = false;
     isRedisTried = true;
@@ -82,7 +85,7 @@ cache.on("del", (key) => {
  */
 export const getCache = async (key: string): Promise<CacheData | undefined> => {
   await ensureRedisConnection();
-  if (isRedisAvailable) {
+  if (redis && isRedisAvailable) {
     try {
       const redisResult = await redis.get(key);
       if (redisResult) return parse(redisResult);
@@ -108,7 +111,7 @@ export const setCache = async (
   ttl: number = config.CACHE_TTL,
 ): Promise<boolean> => {
   // 尝试写入 Redis
-  if (isRedisAvailable && !Buffer.isBuffer(value?.data)) {
+  if (redis && isRedisAvailable && !Buffer.isBuffer(value?.data)) {
     try {
       await redis.set(key, stringify(value), "EX", ttl);
       if (logger) logger.info(`💾 [REDIS] ${key} has been cached`);
@@ -130,14 +133,16 @@ export const setCache = async (
  */
 export const delCache = async (key: string): Promise<boolean> => {
   let redisSuccess = true;
-  try {
-    await redis.del(key);
-    logger.info(`🗑️ [REDIS] ${key} has been deleted from Redis`);
-  } catch (error) {
-    redisSuccess = false;
-    logger.error(
-      `📦 [Redis] del error: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+  if (redis) {
+    try {
+      await redis.del(key);
+      logger.info(`🗑️ [REDIS] ${key} has been deleted from Redis`);
+    } catch (error) {
+      redisSuccess = false;
+      logger.error(
+        `📦 [Redis] del error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   }
   // 尝试删除 NodeCache
   const nodeCacheSuccess = cache.del(key) > 0;
