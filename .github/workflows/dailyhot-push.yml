@@ -1,0 +1,56 @@
+name: DailyHot Push
+
+on:
+  schedule:
+    # Beijing 09:00 and 23:00
+    - cron: "0 1,15 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: dailyhot-push-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      NODE_ENV: production
+      PORT: 6688
+      USE_LOG_FILE: false
+      REDIS_HOST: ""
+      REDIS_PASSWORD: ""
+      PUSH_ENABLED: true
+      PUSH_TIMEZONE: Asia/Shanghai
+      PUSH_SCHEDULE_TIMES: "09:00,23:00"
+      PUSH_ITEMS_PER_SOURCE: 10
+      PUSH_CONCURRENCY: 3
+      PUSH_NO_CACHE: true
+      PUSH_BATCH_INTERVAL: 1000
+      FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+      WEWORK_WEBHOOK_URL: ${{ secrets.WEWORK_WEBHOOK_URL }}
+      WEWORK_MSG_TYPE: ${{ secrets.WEWORK_MSG_TYPE }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run scheduled push
+        run: pnpm push:once
