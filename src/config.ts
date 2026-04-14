@@ -18,6 +18,18 @@ export type Config = {
   REDIS_DB: number;
   ZHIHU_COOKIE: string;
   FILTER_WEIBO_ADVERTISEMENT: boolean;
+  PUSH_ENABLED: boolean;
+  PUSH_TIMEZONE: string;
+  PUSH_SCHEDULE_TIMES: string;
+  PUSH_ITEMS_PER_SOURCE: number;
+  PUSH_CONCURRENCY: number;
+  PUSH_NO_CACHE: boolean;
+  PUSH_BATCH_INTERVAL: number;
+  FEISHU_WEBHOOK_URL: string;
+  WEWORK_WEBHOOK_URL: string;
+  WEWORK_MSG_TYPE: string;
+  TELEGRAM_BOT_TOKEN: string;
+  TELEGRAM_CHAT_ID: string;
 };
 
 // 验证并提取环境变量
@@ -57,4 +69,16 @@ export const config: Config = {
   REDIS_DB:  getNumericEnvVariable("REDIS_DB", 0),
   ZHIHU_COOKIE: getEnvVariable("ZHIHU_COOKIE") || "",
   FILTER_WEIBO_ADVERTISEMENT: getBooleanEnvVariable("FILTER_WEIBO_ADVERTISEMENT", false),
+  PUSH_ENABLED: getBooleanEnvVariable("PUSH_ENABLED", true),
+  PUSH_TIMEZONE: getEnvVariable("PUSH_TIMEZONE") || "Asia/Shanghai",
+  PUSH_SCHEDULE_TIMES: getEnvVariable("PUSH_SCHEDULE_TIMES") || "09:00,23:00",
+  PUSH_ITEMS_PER_SOURCE: getNumericEnvVariable("PUSH_ITEMS_PER_SOURCE", 10),
+  PUSH_CONCURRENCY: getNumericEnvVariable("PUSH_CONCURRENCY", 3),
+  PUSH_NO_CACHE: getBooleanEnvVariable("PUSH_NO_CACHE", true),
+  PUSH_BATCH_INTERVAL: getNumericEnvVariable("PUSH_BATCH_INTERVAL", 1000),
+  FEISHU_WEBHOOK_URL: getEnvVariable("FEISHU_WEBHOOK_URL") || "",
+  WEWORK_WEBHOOK_URL: getEnvVariable("WEWORK_WEBHOOK_URL") || "",
+  WEWORK_MSG_TYPE: getEnvVariable("WEWORK_MSG_TYPE") || "markdown",
+  TELEGRAM_BOT_TOKEN: getEnvVariable("TELEGRAM_BOT_TOKEN") || "",
+  TELEGRAM_CHAT_ID: getEnvVariable("TELEGRAM_CHAT_ID") || "",
 };

@@ -176,6 +176,36 @@ sh ./deploy.sh
 
 成功启动后程序会在控制台输出可访问的地址
 
+### 定时消息推送
+
+本仓库已内置 TrendRadar 风格的定时推送模块。服务启动后会按北京时间每天 `09:00`、`23:00` 自动抓取 `src/routes` 下的全部数据源，并通过已配置的飞书、企业微信、Telegram 渠道分批推送。
+
+在 `.env` 或部署平台环境变量中配置：
+
+```env
+PUSH_ENABLED=true
+PUSH_TIMEZONE="Asia/Shanghai"
+PUSH_SCHEDULE_TIMES="09:00,23:00"
+PUSH_ITEMS_PER_SOURCE=10
+PUSH_CONCURRENCY=3
+PUSH_NO_CACHE=true
+PUSH_BATCH_INTERVAL=1000
+
+FEISHU_WEBHOOK_URL=""
+WEWORK_WEBHOOK_URL=""
+WEWORK_MSG_TYPE="markdown"
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_CHAT_ID=""
+```
+
+多账号使用英文分号 `;` 分隔，例如：
+
+```env
+FEISHU_WEBHOOK_URL="https://hook1;https://hook2"
+TELEGRAM_BOT_TOKEN="token1;token2"
+TELEGRAM_CHAT_ID="chat1;chat2"
+```
+
 ### Vercel 部署
 
 本项目支持通过 `Vercel` 进行一键部署，点击下方按钮或前往 [项目仓库](https://github.com/imsyy/DailyHotApi-Vercel) 进行手动部署
