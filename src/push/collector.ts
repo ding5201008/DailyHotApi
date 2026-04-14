@@ -73,6 +73,34 @@ const collectOne = async (routeName: string): Promise<SourceResult> => {
   }
 };
 
+const timeoutResult = (routeName: string, message: string): SourceResult => {
+  logger.error(`📡 [Push] ${routeName} fetch failed: ${message}`);
+  return {
+    name: routeName,
+    title: routeName,
+    type: "",
+    total: 0,
+    data: [],
+    error: message,
+  };
+};
+
+const withTimeout = async (promise: Promise<SourceResult>, timeoutMs: number, routeName: string): Promise<SourceResult> => {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${routeName} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return timeoutResult(routeName, message);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
 export const collectAllSources = async (): Promise<SourceResult[]> => {
   const routeNames = getRouteNames();
   const concurrency = Math.max(1, config.PUSH_CONCURRENCY);
@@ -80,7 +108,9 @@ export const collectAllSources = async (): Promise<SourceResult[]> => {
 
   for (let i = 0; i < routeNames.length; i += concurrency) {
     const chunk = routeNames.slice(i, i + concurrency);
-    const chunkResults = await Promise.all(chunk.map((routeName) => collectOne(routeName)));
+    const chunkResults = await Promise.all(
+      chunk.map((routeName) => withTimeout(collectOne(routeName), config.PUSH_SOURCE_TIMEOUT, routeName)),
+    );
     results.push(...chunkResults);
   }
 

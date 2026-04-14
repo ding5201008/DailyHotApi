@@ -23,6 +23,7 @@ export type Config = {
   PUSH_SCHEDULE_TIMES: string;
   PUSH_ITEMS_PER_SOURCE: number;
   PUSH_CONCURRENCY: number;
+  PUSH_SOURCE_TIMEOUT: number;
   PUSH_NO_CACHE: boolean;
   PUSH_BATCH_INTERVAL: number;
   FEISHU_WEBHOOK_URL: string;
@@ -74,6 +75,7 @@ export const config: Config = {
   PUSH_SCHEDULE_TIMES: getEnvVariable("PUSH_SCHEDULE_TIMES") || "09:00,23:00",
   PUSH_ITEMS_PER_SOURCE: getNumericEnvVariable("PUSH_ITEMS_PER_SOURCE", 10),
   PUSH_CONCURRENCY: getNumericEnvVariable("PUSH_CONCURRENCY", 3),
+  PUSH_SOURCE_TIMEOUT: getNumericEnvVariable("PUSH_SOURCE_TIMEOUT", 20000),
   PUSH_NO_CACHE: getBooleanEnvVariable("PUSH_NO_CACHE", true),
   PUSH_BATCH_INTERVAL: getNumericEnvVariable("PUSH_BATCH_INTERVAL", 1000),
   FEISHU_WEBHOOK_URL: getEnvVariable("FEISHU_WEBHOOK_URL") || "",
