@@ -2,8 +2,8 @@ name: DailyHot Push
 
 on:
   schedule:
-    # Beijing 09:13 and 23:13
-    - cron: "13 1,15 * * *"
+    # Beijing 09:13, 12:13 and 23:13
+    - cron: "13 1,4,15 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -24,7 +24,7 @@ jobs:
       REDIS_PASSWORD: ""
       PUSH_ENABLED: true
       PUSH_TIMEZONE: Asia/Shanghai
-      PUSH_SCHEDULE_TIMES: "09:00,23:00"
+      PUSH_SCHEDULE_TIMES: "09:13,12:13,23:13"
       PUSH_ITEMS_PER_SOURCE: 10
       PUSH_CONCURRENCY: 3
       PUSH_SOURCE_TIMEOUT: 20000
