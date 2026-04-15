@@ -1,0 +1,65 @@
+name: DailyHot Push Watchdog
+
+on:
+  schedule:
+    # Backup checks after Beijing 09:13, 12:13 and 23:13.
+    - cron: "28,38,48,58 1,4,15 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch-if-missed:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dispatch missed DailyHot Push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_REF: master
+        run: |
+          set -euo pipefail
+
+          bj_date="$(TZ=Asia/Shanghai date +%F)"
+          bj_hour="$(TZ=Asia/Shanghai date +%H)"
+          bj_minute="$(TZ=Asia/Shanghai date +%M)"
+
+          case "${bj_hour}" in
+            09) target_time="09:13" ;;
+            12) target_time="12:13" ;;
+            23) target_time="23:13" ;;
+            *)
+              echo "Not in a target Beijing hour: ${bj_date} ${bj_hour}:${bj_minute}"
+              exit 0
+              ;;
+          esac
+
+          target_epoch="$(TZ=Asia/Shanghai date -d "${bj_date} ${target_time}:00" +%s)"
+          now_epoch="$(date +%s)"
+          age_seconds="$((now_epoch - target_epoch))"
+
+          if [ "${age_seconds}" -lt 0 ] || [ "${age_seconds}" -gt 3600 ]; then
+            echo "Outside watchdog window for ${bj_date} ${target_time} Asia/Shanghai"
+            exit 0
+          fi
+
+          target_utc="$(date -u -d "@${target_epoch}" +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Checking DailyHot Push runs since ${target_utc} for ${bj_date} ${target_time} Asia/Shanghai"
+
+          existing_count="$(
+            gh api "repos/${REPOSITORY}/actions/workflows/dailyhot-push.yml/runs" \
+              --method GET \
+              -F per_page=30 \
+              --jq ".workflow_runs | map(select(.created_at >= \"${target_utc}\" and (.status == \"queued\" or .status == \"in_progress\" or .conclusion == \"success\"))) | length"
+          )"
+
+          if [ "${existing_count}" != "0" ]; then
+            echo "DailyHot Push already has ${existing_count} run(s) since target time; skip dispatch."
+            exit 0
+          fi
+
+          echo "No DailyHot Push run found since target time; dispatching backup run."
+          gh workflow run "DailyHot Push" --repo "${REPOSITORY}" --ref "${TARGET_REF}"
